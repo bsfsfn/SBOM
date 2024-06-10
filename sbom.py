@@ -28,6 +28,11 @@ def parse_pip(path):
       for line in file:
          line = line.rstrip()
          item = line.split('==')
+
+         if len(item) != 2:
+            print(f'Info: a line that doesn\'t satisfy the program\'s assumptions was found in {path}')
+            continue
+
          deps[item[0]] = item[1]
 
    return deps
