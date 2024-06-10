@@ -151,18 +151,20 @@ for repo_path in git_repo_paths:
          sbom_data.append(dep_d)
 
       npmlock_path = os.path.join(repo_path, 'package-lock.json')
-      npmlock_deps = parse_npmlock(npmlock_path)
 
-      for dep in npmlock_deps:
-         dep_d = {}
+      if os.path.exists(npmlock_path):
+         npmlock_deps = parse_npmlock(npmlock_path)
 
-         dep_d['name'] = dep[0]
-         dep_d['version'] = dep[1]
-         dep_d['type'] = 'npm'
-         dep_d['path'] = npmlock_path
-         dep_d['commit_hash'] = commit_hash
+         for dep in npmlock_deps:
+            dep_d = {}
 
-         sbom_data.append(dep_d)
+            dep_d['name'] = dep[0]
+            dep_d['version'] = dep[1]
+            dep_d['type'] = 'npm'
+            dep_d['path'] = npmlock_path
+            dep_d['commit_hash'] = commit_hash
+
+            sbom_data.append(dep_d)
 
 # sort the SBOM by name then version
 sbom_data = sorted(sbom_data, key = lambda x: (x['name'], x['version']))
