@@ -12,3 +12,4 @@ Passing an entire drive as the argument requires a trailing slash. For example, 
 ## Future ideas
 * feature to check whether a package (given by name and version range) is in the SBOM
 * deduplicate SBOM entries, merging version ranges
+* more extensive support of the `requirements.txt` file format
