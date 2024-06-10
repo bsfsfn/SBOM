@@ -6,6 +6,7 @@ import sys
 import subprocess
 
 def find_git_repo_paths(directory_path):
+   """Returns a list of all git repository paths inside a directory at the given path."""
    git_repo_paths = []
 
    for root, dirs, files in os.walk(directory_path):
@@ -15,9 +16,12 @@ def find_git_repo_paths(directory_path):
 
    return git_repo_paths
 
-# assumes the `requirements.txt` file has no empty lines (except one final one), and each line is exactly `name==version`
 def parse_pip(path):
-   """"""
+   """Parses a `requirements.txt` file at the given path.
+
+   Assumes that the `requirements.txt` file has no empty lines (except possibly one final empty line), and that each line is exactly of the form `name==version`.
+   
+   Returns a dictionary with package name keys and package version values."""
    deps = {}
 
    with open(path) as file:
@@ -28,12 +32,18 @@ def parse_pip(path):
 
    return deps
 
-# package.json specification docs: https://docs.npmjs.com/cli/configuring-npm/package-json
-# assumes all the dependencies are contained within these keys:
+# list of keys that can contain dependencies in npm package.json and package-lock.json files
 DEPS_KEYS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']
 
-# versions are reported unmodified (they can also be ranges, URLs, paths)
+# package.json specification docs: https://docs.npmjs.com/cli/configuring-npm/package-json
 def parse_npm(path):
+   """Parses a `package.json` file at the given path.
+   
+   Assumes all the dependencies are contained within `DEPS_KEYS`.
+
+   Versions are reported unmodified (in addition to single version numbers, they can also be ranges, URLs or paths).
+   
+   Returns a list of pairs (package name, package version)."""
    deps = []
 
    with open(path) as file:
@@ -49,10 +59,18 @@ def parse_npm(path):
    return deps
 
 # package-lock.json specification docs: https://docs.npmjs.com/cli/configuring-npm/package-lock-json
-# assumes lockfileVersion >= 2 (doesn't parse the `dependencies` key, only `packages`)
-# versions are reported unmodified (they can also be ranges, URLs, paths)
-# package names can be local paths, these are reported unmodified
 def parse_npmlock(path):
+   """Parses a `package-lock.json` file at the given path.
+
+   Assumes all the dependencies are contained within `DEPS_KEYS`.
+
+   Assumes that the `package-lock.json`'s `lockfileVersion` is at least `2` (`parse_npmlock` only parses the `packages` key, and not the legacy `dependencies` key).
+   
+   Package names are reported unmodified (in addition to just the package name, they can also be full local paths).
+
+   Versions are reported unmodified (in addition to single version numbers, they can also be ranges, URLs or paths).
+
+   Returns a list of pairs (package name, package version)."""
    deps = []
 
    with open(path) as file:
@@ -78,6 +96,7 @@ def parse_npmlock(path):
    return deps
 
 def get_commit_hash(repo_path):
+   """Returns the latest commit's hash of the git repository at the given path."""
    command = ['git', 'log', '--format=\"%H\"', '-n', '1']
    proc = subprocess.run(command, cwd = repo_path, capture_output = True)
    sha = proc.stdout.strip()[1:-1].decode()
@@ -96,6 +115,7 @@ print(f'Found {len(git_repo_paths)} git repositories in \'{directory_path}\'')
 
 sbom_data = []
 
+# find all dependencies
 for repo_path in git_repo_paths:
    commit_hash = get_commit_hash(repo_path)
 
@@ -144,9 +164,10 @@ for repo_path in git_repo_paths:
 
          sbom_data.append(dep_d)
 
-# sort SBOM by name then version
+# sort the SBOM by name then version
 sbom_data = sorted(sbom_data, key = lambda x: (x['name'], x['version']))
 
+# save the SBOM to .csv and .json files
 csv_path = os.path.join(directory_path, 'sbom.csv')
 json_path = os.path.join(directory_path, 'sbom.json')
 
