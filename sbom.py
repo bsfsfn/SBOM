@@ -34,7 +34,7 @@ DEPS_KEYS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDep
 
 # versions are reported unmodified (they can also be ranges, URLs, paths)
 def parse_npm(path):
-   deps = {}
+   deps = []
 
    with open(path) as file:
       data = json.load(file)
@@ -43,7 +43,8 @@ def parse_npm(path):
          deps_chunk = data.get(dep_key)
 
          if deps_chunk is not None:
-            deps |= deps_chunk
+            for dep_name, dep_ver in deps_chunk.items():
+               deps.append((dep_name, dep_ver))
 
    return deps
 
@@ -121,8 +122,8 @@ for repo_path in git_repo_paths:
       for dep in npm_deps:
          dep_d = {}
 
-         dep_d['name'] = dep
-         dep_d['version'] = npm_deps[dep]
+         dep_d['name'] = dep[0]
+         dep_d['version'] = dep[1]
          dep_d['type'] = 'npm'
          dep_d['path'] = npm_path
          dep_d['commit_hash'] = commit_hash
